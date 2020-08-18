@@ -1,0 +1,99 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="row">
+    <div class="col mx-auto col-md-6">
+        <form id="checkOrderStatus">
+
+            <div class="form-group">
+                <input type="number" class="form-control" required placeholder="Order ID" id="orderId">
+            </div>
+
+            <input type="submit" class="btn btn-block btn-primary" value="Check Status">
+        </form>
+    </div>
+</div>
+
+<div class="row mt-5 mb-5" id="orderStatus">
+    <div class="col mx-auto col-md-6">
+        <h4 id="errorMessage" style="display: none;"></h4>
+        <table style="display: none;" id="orderStatusTable" class="table table-striped table-bordered table-hover"
+            style="margin-bottom: 00px !important;">
+            <thead>
+                <tr>
+                    <th colspan="2" scope="col" id="statusOrderId">Order - 12</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td id="statusOrderCustomerName">Sojib</td>
+                </tr>
+                <tr>
+                    <td>Last Updated</td>
+                    <td id="statusOrderUpdated">18-08-2020 08:27 PM</td>
+                </tr>
+                <tr>
+                    <td>Estimated Waiting Time</td>
+                    <td id="statusOrderWaitTime">10 Minutes</td>
+                </tr>
+                <tr>
+                    <td>Ready</td>
+                    <td id="statusOrderReady">Not yet</td>
+                </tr>
+                <tr>
+                    <td>Completed</td>
+                    <td id="statusOrderCompleted">Not yet</td>
+                </tr>
+                <tr>
+                    <td>Total Cost</td>
+                    <td id="statusOrderCost">450</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $("#checkOrderStatus").on('submit', () => {
+        const customerName = $("#customerName").val();
+        const orderId = $("#orderId").val();
+
+        const request = new XMLHttpRequest();
+        request.open("POST", "/api/status/order")
+        request.setRequestHeader("Content-Type", "application/json");
+        request.onload = () => {
+            const responseData = JSON.parse(request.responseText);
+
+            if (responseData.status == "OK") {
+                $("#orderStatusTable").show();
+                $("#errorMessage").hide();
+                $("#statusOrderId").text(`Order - ${responseData.response.order_id}`);
+                $("#statusOrderCustomerName").text(responseData.response.customer_name);
+                $("#statusOrderUpdated").text(responseData.response.updated);
+                $("#statusOrderWaitTime").text(responseData.response.wait_time);
+                $("#statusOrderReady").html(responseData.response.is_ready == "Yes" ? "<i style='color: green' class='fa fa-check'>&nbsp;</i>Yes" : "<i style='color: red' class='fa fa-times'>&nbsp;</i>Not Yet");
+                $("#statusOrderCost").text(responseData.response.order_cost);
+                $("#statusOrderCompleted").html(responseData.response.is_complete == "Yes" ? "<i style='color: green' class='fa fa-check'>&nbsp;</i>Yes" : "<i style='color: red' class='fa fa-times'>&nbsp;</i>Not Yet");
+            }
+            else {
+                $("#orderStatusTable").hide();
+                $("#errorMessage").show();
+                $("#errorMessage").text(responseData.message);
+            }
+        }
+
+        submitData = JSON.stringify({
+            "customer_name": customerName,
+            "order_id": orderId
+        });
+
+        request.send(submitData);
+        return false;
+    })
+
+</script>
+{% endblock %}

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from pprint import pprint
-from app.models import MenuItem, MenuOrder, ItemOrderQuantity
+from app.models import MenuItem, MenuOrder, ItemOrderQuantity, Settings
 from app import app, db
 
 api = Blueprint("api", __name__)
+
+settings = Settings.query.first()
 
 @api.route("/api/orders", methods=['POST'])
 def new_order():
@@ -24,7 +26,7 @@ def new_order():
     }
     """
     data = request.get_json()
-    pprint(data)
+    # pprint(data)
 
     customer_name = data['customer_name']
 
@@ -49,4 +51,48 @@ def new_order():
             db.session.add(order_item_quantity)
     db.session.commit()
 
-    return jsonify({"message": "Success", "status": "OK"})
+    response = {}
+    response['order_id'] = order.id
+    response['order_cost'] = order.cost
+    response['customer_name'] = order.customer_name
+    response['updated'] = order.updated
+    response['is_complete'] = order.is_complete
+    response['wait_time'] = order.wait_time
+    response['is_ready'] = order.is_ready
+
+    return jsonify({"message": "Order submitted successfully",
+                    "status": "OK",
+                    "response": response})
+
+
+@app.route("/api/status/order", methods=['POST'])
+def check_order_status():
+
+    data = request.get_json()
+    order_id = data['order_id']
+
+    order = MenuOrder.query.get(order_id)
+    
+    response = {}
+
+    if not order:
+        return jsonify({"message": "Order not found",
+                    "status": "error",
+                    "response": response}) 
+
+    response['order_id'] = order.id
+    response['order_cost'] = str(order.cost) + " " + settings.currency_sign
+    response['customer_name'] = order.customer_name
+    response['updated'] = order.updated.strftime("%d-%m-%Y %I:%M %p")
+    response['is_complete'] = "Yes" if order.is_complete else "Not Yet"
+    response['wait_time'] = "Almost Ready" if order.wait_time < 2 else str(order.wait_time) + " Minute(s)"
+    response['is_ready'] = "Yes" if order.is_ready else "Not Yet"
+
+    print(response)
+
+    return jsonify({"message": "Order Info",
+                    "status": "OK",
+                    "response": response})
+
+
+

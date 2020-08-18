@@ -23,6 +23,10 @@ def index():
 							settings=settings,
 							food_ids=food_ids)
 
+@main.route('/order/status')
+def status_order():
+	return render_template("status.html", settings=settings)
+
 @main.route("/login", methods=["GET", "POST"])
 def login():
 	if current_user.is_authenticated:
