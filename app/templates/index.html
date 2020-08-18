@@ -1,0 +1,210 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+{% if current_user.is_authenticated %}
+<h1>Welcome {{ current_user.username }}</h1>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6 col-sm-12">
+        <div class="card mt-4 p-5 mb-5">
+            <h2>Foods available
+                <button id="make_order" class='float-right btn btn-primary'>Make Order</button></h2>
+            
+            {% if foods %}
+            <div id="item_list">
+                <ul class="list-group mb-5 mt-5">
+                    {% for food in foods %}
+
+                    <li class="list-group-item">
+                        {{ food.name }} - {{ food.price }} {{ settings.currency_sign }}
+                        <span class="float-right">(<b>Quantity:</b> {{ food.quantity }})</span>
+                    </li>
+
+                    {% endfor %}
+                </ul>
+            </div>
+            <div id="item_list_form" style="display: none;">
+                <form id="makeOrderForm">
+                    <ul class="list-group mt-5">
+                        {% for food in foods %}
+                        <div class="form-group">
+                            <li class="list-group-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="foodCheck-{{ food.id }}">
+                                    <label class="form-check-label" for="foodCheck-{{ food.id }}">
+                                        {{ food.name }} - <span data-originalprice="{{ food.price }}" id="foodPrice-{{ food.id }}">{{ food.price }}</span> {{ settings.currency_sign }}
+                                        <input type="number"
+                                            class="form-control form-control-sm"
+                                            required placeholder="Quantity"
+                                            id="changeQuantity-{{ food.id }}"
+                                            style="display: none;"
+                                            value="{{ food.quantity }}"
+                                            min="1">
+                                    </label>
+                                </div>
+                            </li>
+                        </div>
+
+                        {% endfor %}
+                    </ul>
+                    <div class="form-group">
+                        <input type="text" class="form-control" required placeholder="Enter Your Name" id="customer_name">
+                    </div>
+                    <input type="submit" class="btn btn-block btn-primary" value="Submit Order">
+                </form>
+            </div>
+            {% else %}
+            <p>If you are an admin, go to admin panel and add menu items</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-6 col-sm-12">
+        <div class="card p-5 mb-5 mt-4">
+            <h2>Browser Menu by Category</h2>
+            {% if categories %}
+            <!-- Accordion Using List Group -->
+            <div id="accordion">
+                <div class="panel list-group mt-5">
+
+                    {% for category in categories %}
+                    <a href="#category{{ category.id }}" data-parent="#accordion" data-toggle="collapse"
+                        class="list-group-item">
+                        {{ category.category_name }}
+                    </a>
+                    <div class="collapse" id="category{{ category.id }}">
+                        <ul class="list-group mb-2 mt-2">
+                            {% if category.items %}
+                            {% for item in category.items %}
+                            <li class="ml-3 list-group-item">
+                                {{ item.name }} ({{ item.price }} {{ settings.currency_sign }})
+                                {% if item.available %}
+                                    <span class="float-right badge badge-success">Available</span>
+                                {% else %}
+                                    <span class="float-right badge badge-danger">Not Available</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                            {% else %}
+                            <li class="ml-3 list-group-item text-center">
+                                No items available at this moment!
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p>If you are an admin, go to admin panel and add menu categories</h3>
+                {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $("#make_order").click(function(){
+            const buttonClassName = $(this).attr("class")
+
+            if(buttonClassName == "float-right btn btn-primary"){
+                $(this).removeClass("float-right btn btn-primary");
+                $(this).addClass("float-right btn btn-danger");
+                $(this).text("Cancel");
+
+                $("#item_list").hide();
+                $("#item_list_form").show();
+            }
+            else{
+                $(this).removeClass("float-right btn btn-danger");
+                $(this).addClass("float-right btn btn-primary");
+                $(this).text("Make Order");
+
+                $("#item_list").show();
+                $("#item_list_form").hide();
+            }
+        })
+
+        var food_ids = JSON.parse("{{food_ids}}")
+        food_ids.forEach(function(food_id, index){
+            $(`#foodCheck-${food_id}`).on('change', (event)=> {
+                let priceSpan = $(`#foodPrice-${food_id}`);
+                $(`#changeQuantity-${food_id}`).toggle();
+                $(`#changeQuantity-${food_id}`).val("1");
+                priceSpan.text(priceSpan.data('originalprice'));
+            });
+
+            $(`#changeQuantity-${food_id}`).on('keyup', (event)=> {
+                let quantity = event.target.value;
+                let priceSpan = $(`#foodPrice-${food_id}`);
+                let oldPrice = priceSpan.data('originalprice');
+                let newPrice = parseInt(oldPrice) * quantity;
+                priceSpan.text(newPrice);
+            })
+        })
+
+
+        // submit order handler
+        $("#makeOrderForm").on('submit', (event)=> {
+            event.preventDefault();
+            // get all the inputs into an array.
+            var $inputs = $('#makeOrderForm :input');
+            var elementIds = []
+            $inputs.each(function() {
+                const elementId = $(this).attr('id');
+                if (elementId !== undefined){
+                    elementIds.push(elementId)
+                }
+            });
+
+            var submitData = {}
+            submitData['item'] = []
+            elementIds.forEach(element => {
+                if (element === "customer_name"){
+                    submitData['customer_name'] = $(`#${element}`).val();
+                }
+                else {
+                    const items = {}
+                    if (element.startsWith('foodCheck')){
+                        items['food_checked'] = $(`#${element}`).is(":checked");
+                        items['food_id'] = $(`#${element}`).attr('id');
+                    }
+                    else{
+                        items['quantity'] = $(`#${element}`).val();
+                    }
+                    submitData['item'].push(items)
+                }
+            })
+            const newArr = []
+            submitData['item'].forEach((item, index) => {
+                const newDict = {}
+                if (index%2 === 1){
+                    newDict['food_checked'] = submitData['item'][index-1]['food_checked']
+                    newDict['food_id'] = submitData['item'][index-1]['food_id']
+                    newDict['quantity'] = item['quantity']
+                    newArr.push(newDict)
+                }
+                
+            })
+
+            submitData['item'] = newArr
+
+            const request = new XMLHttpRequest();
+            request.open("POST", "/api/orders")
+            request.setRequestHeader("Content-Type", "application/json");
+            request.onload = () => {
+                const responseData = JSON.parse(request.responseText);
+                console.log(responseData);
+            }
+            submitData = JSON.stringify(submitData);
+            request.send(submitData);
+            return false;
+
+        })
+
+    </script>
+{% endblock %}
