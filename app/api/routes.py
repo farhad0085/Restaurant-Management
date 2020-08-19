@@ -88,6 +88,16 @@ def check_order_status():
     response['wait_time'] = "Almost Ready" if order.wait_time < 2 else str(order.wait_time) + " Minute(s)"
     response['is_ready'] = "Yes" if order.is_ready else "Not Yet"
 
+    response['items'] = []
+    for item_quantity in order.menu_items_quantity:
+        item_quantity_dict = {}
+        item = MenuItem.query.filter_by(id=item_quantity.item_id).first()
+        item_quantity_dict['id'] = item_quantity.id
+        item_quantity_dict['item_name'] = item.name
+        item_quantity_dict['item_price'] = item.price
+        item_quantity_dict['quantity'] = item_quantity.quantity
+        response['items'].append(item_quantity_dict)
+
     print(response)
 
     return jsonify({"message": "Order Info",

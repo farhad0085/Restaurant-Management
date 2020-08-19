@@ -17,11 +17,13 @@
 <div class="row mt-5 mb-5" id="orderStatus">
     <div class="col mx-auto col-md-6">
         <h4 id="errorMessage" style="display: none;"></h4>
-        <table style="display: none;" id="orderStatusTable" class="table table-striped table-bordered table-hover"
-            style="margin-bottom: 00px !important;">
+        <table
+            id="orderStatusTable"
+            class="table table-striped table-bordered table-hover"
+            style="margin-bottom: 0px !important; display: none;">
             <thead>
                 <tr>
-                    <th colspan="2" scope="col" id="statusOrderId">Order - 12</th>
+                    <th colspan="2" scope="col" id="statusOrderId" class="text-center">Order - 12</th>
                 </tr>
             </thead>
             <tbody>
@@ -51,6 +53,23 @@
                 </tr>
             </tbody>
         </table>
+
+        <table
+            id="orderStatusTableItems"
+            class="table table-striped table-bordered table-hover mt-5"
+            style="margin-bottom: 0px !important; display: none;">
+            <thead>
+                <tr>
+                    <th colspan="2" class="text-center">Items</th>
+                </tr>
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -78,6 +97,20 @@
                 $("#statusOrderReady").html(responseData.response.is_ready == "Yes" ? "<i style='color: green' class='fa fa-check'>&nbsp;</i>Yes" : "<i style='color: red' class='fa fa-times'>&nbsp;</i>Not Yet");
                 $("#statusOrderCost").text(responseData.response.order_cost);
                 $("#statusOrderCompleted").html(responseData.response.is_complete == "Yes" ? "<i style='color: green' class='fa fa-check'>&nbsp;</i>Yes" : "<i style='color: red' class='fa fa-times'>&nbsp;</i>Not Yet");
+                if (responseData.response.items.length>1){
+                    $("#orderStatusTableItems tbody").html("");
+                    $("#orderStatusTableItems").show();
+                    responseData.response.items.forEach(item => {
+                        const row_html = `<tr><td>${item.item_name}</td><td>${item.quantity}</td></tr>`
+                        $("#orderStatusTableItems tbody").append(row_html)
+                    })
+                }
+                else{
+                    $("#orderStatusTableItems tbody").html("");
+                    $("#orderStatusTableItems").show();
+                    const row_html = `<tr><td colspan="2" class="text-center">No Items found in this order!</td></tr>`
+                    $("#orderStatusTableItems tbody").append(row_html)
+                }
             }
             else {
                 $("#orderStatusTable").hide();
