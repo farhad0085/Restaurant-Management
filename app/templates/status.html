@@ -78,7 +78,6 @@
 {% block scripts %}
 <script>
     $("#checkOrderStatus").on('submit', () => {
-        const customerName = $("#customerName").val();
         const orderId = $("#orderId").val();
 
         const request = new XMLHttpRequest();
@@ -120,7 +119,6 @@
         }
 
         submitData = JSON.stringify({
-            "customer_name": customerName,
             "order_id": orderId
         });
 

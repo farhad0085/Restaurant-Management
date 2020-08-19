@@ -10,7 +10,7 @@
         <div class="card mt-4 p-5 mb-5">
             <h2>Foods available
                 <button id="make_order" class='float-right btn btn-primary'>Make Order</button></h2>
-            
+
             {% if foods %}
             <div id="item_list">
                 <ul class="list-group mb-5 mt-5">
@@ -31,16 +31,15 @@
                         <div class="form-group">
                             <li class="list-group-item">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" id="foodCheck-{{ food.id }}">
+                                    <input class="form-check-input" type="checkbox" value=""
+                                        id="foodCheck-{{ food.id }}">
                                     <label class="form-check-label" for="foodCheck-{{ food.id }}">
-                                        {{ food.name }} - <span data-originalprice="{{ food.price }}" id="foodPrice-{{ food.id }}">{{ food.price }}</span> {{ settings.currency_sign }}
-                                        <input type="number"
-                                            class="form-control form-control-sm"
-                                            required placeholder="Quantity"
-                                            id="changeQuantity-{{ food.id }}"
-                                            style="display: none;"
-                                            value="{{ food.quantity }}"
-                                            min="1">
+                                        {{ food.name }} - <span data-originalprice="{{ food.price }}"
+                                            id="foodPrice-{{ food.id }}">{{ food.price }}</span>
+                                        {{ settings.currency_sign }}
+                                        <input type="number" class="form-control form-control-sm" required
+                                            placeholder="Quantity" id="changeQuantity-{{ food.id }}"
+                                            style="display: none;" value="{{ food.quantity }}" min="1">
                                     </label>
                                 </div>
                             </li>
@@ -49,7 +48,8 @@
                         {% endfor %}
                     </ul>
                     <div class="form-group">
-                        <input type="text" class="form-control" required placeholder="Enter Your Name" id="customer_name">
+                        <input type="text" class="form-control" required placeholder="Enter Your Name"
+                            id="customer_name">
                     </div>
                     <input type="submit" class="btn btn-block btn-primary" value="Submit Order">
                 </form>
@@ -80,9 +80,9 @@
                             <li class="ml-3 list-group-item">
                                 {{ item.name }} ({{ item.price }} {{ settings.currency_sign }})
                                 {% if item.available %}
-                                    <span class="float-right badge badge-success">Available</span>
+                                <span class="float-right badge badge-success">Available</span>
                                 {% else %}
-                                    <span class="float-right badge badge-danger">Not Available</span>
+                                <span class="float-right badge badge-danger">Not Available</span>
                                 {% endif %}
                             </li>
                             {% endfor %}
@@ -104,107 +104,147 @@
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="statusModalCenter" tabindex="-1" role="dialog" aria-labelledby="statusModalCenterTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span id="closeModal" aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="orderStatusButton" class="btn btn-primary btn-block">View Order Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
 
 {% block scripts %}
-    <script>
-        $("#make_order").click(function(){
-            const buttonClassName = $(this).attr("class")
+<script>
+    $("#make_order").click(function () {
+        const buttonClassName = $(this).attr("class")
 
-            if(buttonClassName == "float-right btn btn-primary"){
-                $(this).removeClass("float-right btn btn-primary");
-                $(this).addClass("float-right btn btn-danger");
-                $(this).text("Cancel");
+        if (buttonClassName == "float-right btn btn-primary") {
+            $(this).removeClass("float-right btn btn-primary");
+            $(this).addClass("float-right btn btn-danger");
+            $(this).text("Cancel");
 
-                $("#item_list").hide();
-                $("#item_list_form").show();
-            }
-            else{
-                $(this).removeClass("float-right btn btn-danger");
-                $(this).addClass("float-right btn btn-primary");
-                $(this).text("Make Order");
+            $("#item_list").hide();
+            $("#item_list_form").show();
+        }
+        else {
+            $(this).removeClass("float-right btn btn-danger");
+            $(this).addClass("float-right btn btn-primary");
+            $(this).text("Make Order");
 
-                $("#item_list").show();
-                $("#item_list_form").hide();
-            }
+            $("#item_list").show();
+            $("#item_list_form").hide();
+        }
+    })
+
+    var food_ids = JSON.parse("{{food_ids}}")
+    food_ids.forEach(function (food_id, index) {
+        $(`#foodCheck-${food_id}`).on('change', (event) => {
+            let priceSpan = $(`#foodPrice-${food_id}`);
+            $(`#changeQuantity-${food_id}`).toggle();
+            $(`#changeQuantity-${food_id}`).val("1");
+            priceSpan.text(priceSpan.data('originalprice'));
+        });
+
+        $(`#changeQuantity-${food_id}`).on('keyup', (event) => {
+            let quantity = event.target.value;
+            let priceSpan = $(`#foodPrice-${food_id}`);
+            let oldPrice = priceSpan.data('originalprice');
+            let newPrice = parseInt(oldPrice) * quantity;
+            priceSpan.text(newPrice);
         })
-
-        var food_ids = JSON.parse("{{food_ids}}")
-        food_ids.forEach(function(food_id, index){
-            $(`#foodCheck-${food_id}`).on('change', (event)=> {
-                let priceSpan = $(`#foodPrice-${food_id}`);
-                $(`#changeQuantity-${food_id}`).toggle();
-                $(`#changeQuantity-${food_id}`).val("1");
-                priceSpan.text(priceSpan.data('originalprice'));
-            });
-
-            $(`#changeQuantity-${food_id}`).on('keyup', (event)=> {
-                let quantity = event.target.value;
-                let priceSpan = $(`#foodPrice-${food_id}`);
-                let oldPrice = priceSpan.data('originalprice');
-                let newPrice = parseInt(oldPrice) * quantity;
-                priceSpan.text(newPrice);
-            })
-        })
+    })
 
 
-        // submit order handler
-        $("#makeOrderForm").on('submit', (event)=> {
-            event.preventDefault();
-            // get all the inputs into an array.
-            var $inputs = $('#makeOrderForm :input');
-            var elementIds = []
-            $inputs.each(function() {
-                const elementId = $(this).attr('id');
-                if (elementId !== undefined){
-                    elementIds.push(elementId)
-                }
-            });
+    // submit order handler
+    $("#makeOrderForm").on('submit', (event) => {
+        event.preventDefault();
+        // get all the inputs into an array.
+        var $inputs = $('#makeOrderForm :input');
+        var elementIds = []
+        $inputs.each(function () {
+            const elementId = $(this).attr('id');
+            if (elementId !== undefined) {
+                elementIds.push(elementId)
+            }
+        });
 
-            var submitData = {}
-            submitData['item'] = []
-            elementIds.forEach(element => {
-                if (element === "customer_name"){
-                    submitData['customer_name'] = $(`#${element}`).val();
+        var submitData = {}
+        submitData['item'] = []
+        elementIds.forEach(element => {
+            if (element === "customer_name") {
+                submitData['customer_name'] = $(`#${element}`).val();
+            }
+            else {
+                const items = {}
+                if (element.startsWith('foodCheck')) {
+                    items['food_checked'] = $(`#${element}`).is(":checked");
+                    items['food_id'] = $(`#${element}`).attr('id');
                 }
                 else {
-                    const items = {}
-                    if (element.startsWith('foodCheck')){
-                        items['food_checked'] = $(`#${element}`).is(":checked");
-                        items['food_id'] = $(`#${element}`).attr('id');
-                    }
-                    else{
-                        items['quantity'] = $(`#${element}`).val();
-                    }
-                    submitData['item'].push(items)
+                    items['quantity'] = $(`#${element}`).val();
                 }
-            })
-            const newArr = []
-            submitData['item'].forEach((item, index) => {
-                const newDict = {}
-                if (index%2 === 1){
-                    newDict['food_checked'] = submitData['item'][index-1]['food_checked']
-                    newDict['food_id'] = submitData['item'][index-1]['food_id']
-                    newDict['quantity'] = item['quantity']
-                    newArr.push(newDict)
-                }
-                
-            })
-
-            submitData['item'] = newArr
-
-            const request = new XMLHttpRequest();
-            request.open("POST", "/api/orders")
-            request.setRequestHeader("Content-Type", "application/json");
-            request.onload = () => {
-                const responseData = JSON.parse(request.responseText);
-                console.log(responseData);
+                submitData['item'].push(items)
             }
-            submitData = JSON.stringify(submitData);
-            request.send(submitData);
-            return false;
+        })
+        const newArr = []
+        submitData['item'].forEach((item, index) => {
+            const newDict = {}
+            if (index % 2 === 1) {
+                newDict['food_checked'] = submitData['item'][index - 1]['food_checked']
+                newDict['food_id'] = submitData['item'][index - 1]['food_id']
+                newDict['quantity'] = item['quantity']
+                newArr.push(newDict)
+            }
 
         })
 
-    </script>
+        submitData['item'] = newArr
+
+        const request = new XMLHttpRequest();
+        request.open("POST", "/api/orders")
+        request.setRequestHeader("Content-Type", "application/json");
+        request.onload = () => {
+            const responseData = JSON.parse(request.responseText);
+            if (responseData.status == "OK") {
+                $('#statusModalCenter').modal('show');
+                $("#modalTitle").text("Congratulations!");
+                $("#modalBody").html(`<p>Your order submitted successfully!</p><p><b>Order ID : ${responseData.response.order_id}</b></p><p>Please note your Order ID to check your order status!</p>`);
+                $("#orderStatusButton").click(() => {
+                    const order_id = responseData.response.order_id;
+                    url_status_order = `/order/status/${order_id}`;
+                    window.location.assign(url_status_order)
+                })
+            }
+            else{
+                $('#statusModalCenter').modal('show');
+                $("#modalTitle").text("Oops!");
+                $("#modalBody").html(`<p>Your order could not be created! Please try again!</p>`);
+                $("#orderStatusButton").hide();
+            }
+            $("#closeModal").click(() => {
+                window.location.reload(false);
+            })
+        }
+        submitData = JSON.stringify(submitData);
+        request.send(submitData);
+        return false;
+
+    })
+
+</script>
 {% endblock %}

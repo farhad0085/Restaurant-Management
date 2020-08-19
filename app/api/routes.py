@@ -76,7 +76,7 @@ def check_order_status():
     response = {}
 
     if not order:
-        return jsonify({"message": "Order not found",
+        return jsonify({"message": "Oops! Order not found",
                     "status": "error",
                     "response": response}) 
 

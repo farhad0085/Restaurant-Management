@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import current_user, login_user, logout_user, login_required
 from app.main.forms import LoginForm
-from app.models import User, Category, MenuItem, Settings
+from app.models import User, Category, MenuItem, Settings, MenuOrder
 from app import bcrypt, db
 
 main = Blueprint('main', __name__)
@@ -26,6 +26,10 @@ def index():
 @main.route('/order/status')
 def status_order():
 	return render_template("status.html", settings=settings)
+
+@main.route('/order/status/<order_id>')
+def status_order_by_id(order_id):
+	return render_template("status_by_id.html", settings=settings)
 
 @main.route("/login", methods=["GET", "POST"])
 def login():
